@@ -7,6 +7,18 @@ import { getSession } from '@/lib/session';
  * Runs before every request to check if user is authenticated
  */
 export async function proxy(request: NextRequest) {
+  // Verify critical environment variables are present
+  if (!process.env.SESSION_SECRET) {
+    console.error('[Proxy] SESSION_SECRET not found in environment variables');
+    // Return error page for non-public routes
+    if (!request.nextUrl.pathname.startsWith('/login')) {
+      return new NextResponse(
+        'Configuration Error: SESSION_SECRET is missing. Please check your .env.local file.',
+        { status: 500 }
+      );
+    }
+  }
+
   // Get current session
   const session = await getSession();
 

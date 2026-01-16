@@ -20,10 +20,14 @@ rl.question('Enter your password: ', (password) => {
   // Generate salt and hash (10 rounds is a good balance of security and performance)
   const saltRounds = 10;
   const hash = bcrypt.hashSync(password, saltRounds);
+  
+  // Escape dollar signs for .env files
+  const escapedHash = hash.replace(/\$/g, '\\$');
 
   console.log('\n✅ Password hash generated successfully!\n');
-  console.log('Copy this hash to your .env.local file:\n');
-  console.log(`APP_PASSWORD_HASH=${hash}\n`);
+  console.log('Copy this line to your .env.local file:\n');
+  console.log(`APP_PASSWORD_HASH=${escapedHash}\n`);
+  console.log('⚠️  Note: The backslashes (\\) before $ are required!\n');
   
   // Verify the hash works
   const isValid = bcrypt.compareSync(password, hash);
