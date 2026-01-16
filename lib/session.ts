@@ -34,10 +34,8 @@ export async function getSession(): Promise<IronSession<SessionData>> {
   const cookieStore = await cookies();
   const session = await getIronSession<SessionData>(cookieStore, sessionOptions);
 
-  // Initialize session if not exists
-  if (!session.isLoggedIn) { // check undefined and null for type safety
-    session.isLoggedIn = false;
-  }
+  // Ensure isLoggedIn is always boolean (not undefined)
+  session.isLoggedIn = session.isLoggedIn ?? false;
 
   return session;
 }
