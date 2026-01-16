@@ -3,10 +3,10 @@ import type { NextRequest } from 'next/server';
 import { getSession } from '@/lib/session';
 
 /**
- * Middleware to protect routes and enforce authentication
+ * Proxy to protect routes and enforce authentication
  * Runs before every request to check if user is authenticated
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Get current session
   const session = await getSession();
 
@@ -39,7 +39,7 @@ export async function middleware(request: NextRequest) {
 }
 
 /**
- * Configure which routes the middleware runs on
+ * Configure which routes the proxy runs on
  */
 export const config = {
   matcher: [

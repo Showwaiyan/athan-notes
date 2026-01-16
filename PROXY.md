@@ -1,15 +1,17 @@
-# Middleware Documentation
+# Proxy Documentation
 
-This file contains the Next.js middleware that protects routes and enforces authentication.
+This file contains the Next.js proxy that protects routes and enforces authentication.
 
-## What is Middleware?
+## What is Proxy?
 
-Middleware runs **before every request** reaches your pages or API routes. It acts as a gatekeeper, checking if users are authenticated and redirecting them as needed.
+Proxy runs **before every request** reaches your pages or API routes. It acts as a gatekeeper, checking if users are authenticated and redirecting them as needed.
+
+> **Note:** In Next.js 16+, the "middleware" convention has been renamed to "proxy" to better reflect its purpose as a network boundary in front of your app.
 
 ## How It Works
 
 ```
-User Request → Middleware → Page/API Route
+User Request → Proxy → Page/API Route
                ↓
          Check Session
                ↓
@@ -123,7 +125,7 @@ const publicPaths = [
 4. **Prevents access to login when logged in** - Better UX
 5. **Redirect tracking** - Returns users to intended page
 
-## Testing Middleware
+## Testing Proxy
 
 ```bash
 # Test unauthenticated access
@@ -143,19 +145,19 @@ curl -i http://localhost:3000/login
 
 ### Issue: Infinite redirect loop
 **Cause:** Login page is not in publicPaths  
-**Fix:** Ensure `/login` is in the publicPaths array
+**Fix:** Ensure `/login` is in the publicPaths array in `proxy.ts`
 
 ### Issue: Static files not loading
-**Cause:** Middleware running on static files  
-**Fix:** Check matcher configuration excludes them
+**Cause:** Proxy running on static files  
+**Fix:** Check matcher configuration in `proxy.ts` excludes them
 
 ### Issue: API routes always redirect
 **Cause:** API route not in publicPaths  
-**Fix:** Add API routes to publicPaths or update matcher
+**Fix:** Add API routes to publicPaths in `proxy.ts` or update matcher
 
 ## Performance
 
-- Middleware runs on **every request** that matches the config
+- Proxy runs on **every request** that matches the config
 - Session decryption is very fast (~1ms)
 - No database queries needed (stateless sessions)
 - Minimal performance impact
@@ -164,7 +166,7 @@ curl -i http://localhost:3000/login
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ MIDDLEWARE EXECUTION FLOW                                   │
+│ PROXY EXECUTION FLOW                                        │
 └─────────────────────────────────────────────────────────────┘
 
 Every Request
@@ -179,9 +181,16 @@ Is path in publicPaths?
               └─ NO  → Redirect to /login?redirect=<current_path>
 ```
 
+## Migration from Middleware
+
+If you're migrating from the older `middleware.ts` file:
+- Rename `middleware.ts` to `proxy.ts`
+- Rename the exported function from `middleware` to `proxy`
+- Update any documentation references from "middleware" to "proxy"
+
 ## Next Steps
 
-After middleware is set up, you'll need:
-1. Create `/login` page (Step 9)
+After proxy is set up, you'll need:
+1. Create `/login` page
 2. Test authentication flow
 3. Add logout button to protected pages
