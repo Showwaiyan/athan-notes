@@ -28,7 +28,7 @@ function buildProcessedNoteSchema() {
   return z.object({
     title: z.string().max(100, 'Title must be 100 characters or less'),
     content: z.string().min(1, 'Content cannot be empty'),
-    summary: z.string().min(1, 'Summary cannot be empty').max(500, 'Summary too long'),
+    summary: z.string().min(1, 'Summary cannot be empty').max(200, 'Summary must be 200 characters or less'),
     category: categoryEnum,
     tags: z.array(z.string()).min(1, 'At least one tag is required').max(10, 'Maximum 10 tags allowed'),
   });
@@ -117,14 +117,27 @@ export async function processAudio(
     const prompt = `
 You are analyzing a Burmese voice note. Follow these steps PRECISELY:
 
-STEP 1: TRANSCRIBE
-Transcribe the audio to Burmese text. This becomes the CONTENT field.
-Preserve the original meaning and nuance. Do NOT translate to English.
+STEP 1: TRANSCRIBE & CORRECT
+Transcribe the audio to Burmese text with the following improvements:
+- CORRECT any spelling mistakes in Burmese (check Burmese orthography)
+- FIX fragmented sentences (if user starts a sentence, pauses, then continues later, merge them naturally)
+- REMOVE filler words, repetitions, and false starts ("အဲ့တော့... ဒီ... ဒီ..." → clear sentence)
+- NORMALIZE the text to sound natural and coherent while PRESERVING the original meaning
+- Fix any grammatical errors to make sentences flow properly
+- If speech is disorganized, reorganize into logical, complete sentences
+- Keep the same ideas and content, just make it read naturally
+
+IMPORTANT: 
+- Do NOT change the meaning or add information not in the audio
+- Do NOT translate to English
+- Just make the Burmese text cleaner, more natural, and easier to read
+- This corrected, natural text becomes the CONTENT field
 
 STEP 2: SUMMARIZE
-Create a brief, intelligent summary (1-2 sentences) in Burmese.
-Focus on KEY POINTS and main ideas. This is the SUMMARY field.
-The summary should be different from and shorter than the full transcription.
+Create a brief, concise summary (ONE short sentence, maximum 15-20 words) in Burmese.
+Focus on the SINGLE most important key point or main idea.
+Keep it extremely concise - just the essence of the note.
+The summary should be much shorter than the full transcription.
 
 STEP 3: CATEGORIZE
 Choose EXACTLY ONE category from this list. You MUST use the EXACT name (case-sensitive):
@@ -136,28 +149,42 @@ Do NOT use variations, lowercase, or synonyms. Use the exact category name shown
 If you're unsure which category fits best, default to "${categoryNames[0]}" or the most general category.
 
 STEP 4: EXTRACT TAGS
-Extract 3-5 relevant tags in Burmese that describe key topics, themes, or keywords.
+Extract 3-5 relevant tags in ENGLISH ONLY that describe key topics, themes, or keywords.
 Tags should help organize and find this note later.
+IMPORTANT: Tags must be in English, not Burmese. Use simple, descriptive English words.
 
 STEP 5: CREATE TITLE
-Generate a brief, descriptive title in Burmese (maximum 10 words).
-The title should capture the main point or topic of the voice note.
+Generate a brief, descriptive title (maximum 10 words).
+IMPORTANT: 
+- Keep the title in the SAME LANGUAGE as spoken in the audio
+- If the user speaks Burmese, the title should be in Burmese
+- If the user speaks English, the title should be in English
+- If the user speaks BOTH languages mixed, keep BOTH languages in the title (do NOT translate)
+- Just capture what was said naturally, preserving the original language(s)
+- Correct any spelling mistakes in the title as well
 
 Return your response as valid JSON in this EXACT format:
 {
-  "title": "string in Burmese (max 10 words)",
-  "content": "full transcription in Burmese",
-  "summary": "1-2 sentence summary in Burmese",
+  "title": "string in original language(s) spoken (max 10 words, spelling corrected)",
+  "content": "full transcription in Burmese (corrected, natural, coherent)",
+  "summary": "one short sentence in Burmese (max 15-20 words)",
   "category": "${categoryNames.join('|')}",
-  "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"]
+  "tags": ["english_tag1", "english_tag2", "english_tag3"]
 }
 
 EXTREMELY IMPORTANT:
 - The "category" field MUST be exactly one of: ${categoryList}
 - Use the EXACT spelling and capitalization shown above
 - Do NOT invent new categories or use variations
+- Tags MUST be in English only
+- Title should preserve the original language(s) as spoken (no translation)
+- Content should be corrected, natural Burmese text (fix spelling, merge fragments, remove fillers)
 
-Language: All text fields (title, content, summary, tags) should be in Burmese (my-MM).
+Language Rules:
+- title: Keep original language(s) as spoken (Burmese, English, or mixed) - CORRECTED spelling
+- content: Burmese transcription - CORRECTED, NATURAL, and COHERENT
+- summary: Burmese summary - corrected spelling
+- tags: English only
 `;
 
     // Generate content with audio

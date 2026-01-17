@@ -66,8 +66,9 @@ export function validateCategory(category: string): Category {
 /**
  * Truncates text to a maximum length, preserving word boundaries
  * Handles Burmese text (Unicode) properly
+ * Safer truncation with stricter limits for Notion display
  */
-export function truncateSummary(text: string, maxLength: number = 200): string {
+export function truncateSummary(text: string, maxLength: number = 150): string {
   if (!text) {
     return '';
   }
@@ -77,15 +78,19 @@ export function truncateSummary(text: string, maxLength: number = 200): string {
     return text;
   }
   
-  // Truncate to maxLength
-  let truncated = text.substring(0, maxLength);
+  // For safety with Burmese Unicode, truncate to maxLength - 10 to avoid splitting characters
+  const safeMaxLength = maxLength - 10;
+  let truncated = text.substring(0, safeMaxLength);
   
-  // Find last space to avoid cutting mid-word
-  const lastSpace = truncated.lastIndexOf(' ');
+  // Find last space or Burmese sentence ending to avoid cutting mid-word
+  const lastSpace = Math.max(
+    truncated.lastIndexOf(' '),
+    truncated.lastIndexOf('။'), // Burmese sentence ending
+    truncated.lastIndexOf('၊')  // Burmese comma
+  );
   
-  // Only use space boundary if it's in the last 20% of the text
-  // This prevents truncating too short
-  if (lastSpace > maxLength * 0.8) {
+  // Only use boundary if it's in the last 30% of the text
+  if (lastSpace > safeMaxLength * 0.7) {
     truncated = truncated.substring(0, lastSpace);
   }
   
@@ -145,8 +150,8 @@ export async function createVoiceNotePage(
     // Get category icon
     const categoryIcon = getCategoryIcon(validatedCategory);
     
-    // Truncate summary to 200 characters
-    const truncatedSummary = truncateSummary(data.summary, 200);
+    // Truncate summary to 150 characters (safer for Burmese text)
+    const truncatedSummary = truncateSummary(data.summary, 150);
     
     // Create the page with properties and content
     const response = await notion.pages.create({

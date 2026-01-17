@@ -115,7 +115,8 @@ describe('lib/notion.ts', () => {
       const longText = 'a'.repeat(250);
       const result = truncateSummary(longText, 200);
       
-      expect(result).toHaveLength(203); // 200 chars + '...'
+      // New behavior: uses maxLength - 10 for safety (190) + '...' = 193
+      expect(result).toHaveLength(193); // (200 - 10) chars + '...'
       expect(result.endsWith('...')).toBe(true);
     });
 
@@ -137,8 +138,8 @@ describe('lib/notion.ts', () => {
       const result = truncateSummary(text, 200);
       
       expect(result.endsWith('...')).toBe(true);
-      // Should truncate at maxLength since last space is too far back (< 80% threshold)
-      expect(result.length).toBe(203); // 200 + '...'
+      // Should truncate at safeMaxLength (maxLength - 10) since no good boundary found
+      expect(result.length).toBe(193); // (200 - 10) + '...'
     });
 
     test('handles Burmese text (Unicode) correctly', () => {
@@ -158,11 +159,12 @@ describe('lib/notion.ts', () => {
       expect(result).not.toMatch(/\s+\.\.\.$/);
     });
 
-    test('uses default maxLength of 200 when not specified', () => {
+    test('uses default maxLength of 150 when not specified', () => {
       const longText = 'a'.repeat(250);
       const result = truncateSummary(longText);
       
-      expect(result).toHaveLength(203); // 200 + '...'
+      // Default is now 150, uses 150 - 10 = 140 for safety, + '...' = 143
+      expect(result).toHaveLength(143); // (150 - 10) + '...'
       expect(result.endsWith('...')).toBe(true);
     });
   });

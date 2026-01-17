@@ -113,11 +113,11 @@ export async function GET() {
     responseFormat: {
       success: 'boolean',
       data: {
-        title: 'string (Burmese, max 10 words)',
+        title: 'string (original language as spoken - Burmese, English, or mixed, max 10 words)',
         content: 'string (full transcription in Burmese)',
         summary: 'string (1-2 sentences in Burmese)',
         category: 'Project | Learning | Personal | Task',
-        tags: 'string[] (3-5 tags in Burmese)',
+        tags: 'string[] (3-5 tags in English only)',
       },
     },
   });
