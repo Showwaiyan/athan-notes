@@ -17,65 +17,19 @@ export const notion = new Client({
 });
 
 // Allowed categories based on user's Notion database setup
+// These are the EXACT category names that Gemini must return (case-sensitive)
 // Project: Business ideas, app ideas, work projects, brainstorming
 // Learning: Study, education, courses
 // Personal: Private notes, diary, thoughts
 // Task: To-dos, action items, reminders
-const ALLOWED_CATEGORIES = [
+export const ALLOWED_CATEGORIES = [
   'Project',
   'Learning',
   'Personal',
   'Task',
 ] as const;
 
-type Category = typeof ALLOWED_CATEGORIES[number];
-
-// Category mapping for common variations and synonyms
-const CATEGORY_MAPPINGS: Record<string, Category> = {
-  // Exact matches
-  'Project': 'Project',
-  'Learning': 'Learning',
-  'Personal': 'Personal',
-  'Task': 'Task',
-  
-  // Lowercase variations
-  'project': 'Project',
-  'projects': 'Project',
-  'learning': 'Learning',
-  'personal': 'Personal',
-  'task': 'Task',
-  'tasks': 'Task',
-  
-  // Common synonyms for Project (includes business, ideas, work)
-  'business': 'Project',
-  'work': 'Project',
-  'office': 'Project',
-  'job': 'Project',
-  'idea': 'Project',
-  'ideas': 'Project',
-  'brainstorm': 'Project',
-  'app': 'Project',
-  'startup': 'Project',
-  
-  // Learning synonyms
-  'study': 'Learning',
-  'education': 'Learning',
-  'course': 'Learning',
-  
-  // Task synonyms
-  'todo': 'Task',
-  'to-do': 'Task',
-  'action': 'Task',
-  'reminder': 'Task',
-  
-  // Personal synonyms
-  'private': 'Personal',
-  'note': 'Personal',
-  'notes': 'Personal',
-  'diary': 'Personal',
-  'thought': 'Personal',
-  'thoughts': 'Personal',
-};
+export type Category = typeof ALLOWED_CATEGORIES[number];
 
 // Category to emoji icon mapping
 const CATEGORY_ICONS: Record<Category, string> = {
@@ -93,23 +47,20 @@ export function getCategoryIcon(category: Category): string {
 }
 
 /**
- * Maps a category string to one of the allowed categories
- * Falls back to 'Personal' if category is unknown
+ * Validates that a category is one of the allowed categories
+ * Falls back to 'Personal' if category is invalid
+ * 
+ * NOTE: Gemini should return exact category names, but this provides
+ * a safety fallback in case of unexpected responses.
  */
-export function mapCategory(category: string): Category {
-  // Try exact match first
-  if (CATEGORY_MAPPINGS[category]) {
-    return CATEGORY_MAPPINGS[category];
+export function validateCategory(category: string): Category {
+  // Check if it's a valid category (exact match, case-sensitive)
+  if (ALLOWED_CATEGORIES.includes(category as Category)) {
+    return category as Category;
   }
   
-  // Try case-insensitive match
-  const lowerCategory = category.toLowerCase();
-  if (CATEGORY_MAPPINGS[lowerCategory]) {
-    return CATEGORY_MAPPINGS[lowerCategory];
-  }
-  
-  // Fallback to Personal
-  console.warn(`Unknown category "${category}", using fallback: Personal`);
+  // Fallback to Personal for invalid categories
+  console.warn(`Invalid category "${category}", falling back to: Personal`);
   return 'Personal';
 }
 
@@ -189,11 +140,11 @@ export async function createVoiceNotePage(
   data: VoiceNoteData
 ): Promise<CreatePageResult> {
   try {
-    // Validate and map category
-    const mappedCategory = mapCategory(data.category);
+    // Validate category (should be exact match from Gemini)
+    const validatedCategory = validateCategory(data.category);
     
     // Get category icon
-    const categoryIcon = getCategoryIcon(mappedCategory);
+    const categoryIcon = getCategoryIcon(validatedCategory);
     
     // Truncate summary to 200 characters
     const truncatedSummary = truncateSummary(data.summary, 200);
@@ -232,7 +183,7 @@ export async function createVoiceNotePage(
         // Category property (select)
         Category: {
           select: {
-            name: mappedCategory,
+            name: validatedCategory,
           },
         },
         // Tags property (multi-select)
@@ -270,7 +221,7 @@ export async function createVoiceNotePage(
       success: true,
       pageId,
       pageUrl,
-      categoryMapped: mappedCategory,
+      categoryMapped: validatedCategory,
     };
   } catch (error) {
     console.error('Failed to create Notion page:', error);
