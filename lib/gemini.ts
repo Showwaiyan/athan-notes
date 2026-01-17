@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { z } from 'zod';
-import { ALLOWED_CATEGORIES, type Category } from './notion';
+import { getAllowedCategories, type Category } from './notion';
+import { getAllCategories } from './categoryConfig';
 
 // Initialize Gemini API
 const apiKey = process.env.GEMINI_API_KEY;
@@ -11,16 +12,29 @@ if (!apiKey) {
 
 const genAI = new GoogleGenerativeAI(apiKey);
 
-// Zod schema for validating Gemini's response
-const ProcessedNoteSchema = z.object({
-  title: z.string().max(100, 'Title must be 100 characters or less'),
-  content: z.string().min(1, 'Content cannot be empty'),
-  summary: z.string().min(1, 'Summary cannot be empty').max(500, 'Summary too long'),
-  category: z.enum(['Project', 'Learning', 'Personal', 'Task']),
-  tags: z.array(z.string()).min(1, 'At least one tag is required').max(10, 'Maximum 10 tags allowed'),
-});
+/**
+ * Build Zod schema dynamically based on categories from config
+ */
+function buildProcessedNoteSchema() {
+  const categories = getAllowedCategories();
+  
+  if (categories.length === 0) {
+    throw new Error('No categories found in config');
+  }
+  
+  // Create enum validator from category names
+  const categoryEnum = z.enum(categories as [string, ...string[]]);
+  
+  return z.object({
+    title: z.string().max(100, 'Title must be 100 characters or less'),
+    content: z.string().min(1, 'Content cannot be empty'),
+    summary: z.string().min(1, 'Summary cannot be empty').max(500, 'Summary too long'),
+    category: categoryEnum,
+    tags: z.array(z.string()).min(1, 'At least one tag is required').max(10, 'Maximum 10 tags allowed'),
+  });
+}
 
-export type ProcessedNote = z.infer<typeof ProcessedNoteSchema>;
+export type ProcessedNote = z.infer<ReturnType<typeof buildProcessedNoteSchema>>;
 
 // Audio format validation
 const ALLOWED_MIME_TYPES = [
@@ -81,7 +95,19 @@ export async function processAudio(
     // Convert buffer to base64
     const base64Audio = audioBuffer.toString('base64');
 
-    // Craft the prompt with strong category constraints
+    // Get categories from config for dynamic prompt generation
+    const categories = getAllCategories();
+    const categoryNames = categories.map(c => c.name);
+    
+    // Build category descriptions for prompt
+    const categoryDescriptions = categories.map(c => 
+      `- ${c.name}: ${c.description}`
+    ).join('\n');
+    
+    // Build list of exact category names for validation reminder
+    const categoryList = categoryNames.map(name => `"${name}"`).join(', ');
+
+    // Craft the prompt with strong category constraints (using config categories)
     const prompt = `
 You are analyzing a Burmese voice note. Follow these steps PRECISELY:
 
@@ -96,14 +122,12 @@ The summary should be different from and shorter than the full transcription.
 
 STEP 3: CATEGORIZE
 Choose EXACTLY ONE category from this list. You MUST use the EXACT name (case-sensitive):
-- Project: Business ideas, app ideas, work projects, startups, brainstorming, entrepreneurship
-- Learning: Study notes, education, courses, knowledge acquisition, research
-- Personal: Private thoughts, diary entries, personal reflections, feelings
-- Task: To-dos, action items, reminders, things to complete, deadlines
+${categoryDescriptions}
 
 CRITICAL: Pick the PRIMARY purpose of the note based on the main intent.
-You MUST return one of these EXACT strings: "Project", "Learning", "Personal", or "Task"
+You MUST return one of these EXACT strings: ${categoryList}
 Do NOT use variations, lowercase, or synonyms. Use the exact category name shown above.
+If you're unsure which category fits best, default to "${categoryNames[0]}" or the most general category.
 
 STEP 4: EXTRACT TAGS
 Extract 3-5 relevant tags in Burmese that describe key topics, themes, or keywords.
@@ -118,14 +142,13 @@ Return your response as valid JSON in this EXACT format:
   "title": "string in Burmese (max 10 words)",
   "content": "full transcription in Burmese",
   "summary": "1-2 sentence summary in Burmese",
-  "category": "Project|Learning|Personal|Task",
+  "category": "${categoryNames.join('|')}",
   "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"]
 }
 
 EXTREMELY IMPORTANT:
-- The "category" field MUST be exactly one of: "Project", "Learning", "Personal", "Task"
+- The "category" field MUST be exactly one of: ${categoryList}
 - Use the EXACT spelling and capitalization shown above
-- If you're unsure which category fits best, default to "Personal"
 - Do NOT invent new categories or use variations
 
 Language: All text fields (title, content, summary, tags) should be in Burmese (my-MM).
@@ -157,7 +180,8 @@ Language: All text fields (title, content, summary, tags) should be in Burmese (
       throw new Error('Gemini returned invalid JSON response');
     }
 
-    // Validate response with Zod
+    // Validate response with Zod (build schema dynamically)
+    const ProcessedNoteSchema = buildProcessedNoteSchema();
     const validatedData = ProcessedNoteSchema.parse(parsedResponse);
 
     return validatedData;

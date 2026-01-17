@@ -1,4 +1,10 @@
 import { Client } from '@notionhq/client';
+import { 
+  getCategoryNames, 
+  getCategoryIcon as getIconFromConfig,
+  isValidCategory,
+  getAllCategories
+} from './categoryConfig';
 
 // Initialize Notion client
 const notionApiKey = process.env.NOTION_API_KEY;
@@ -16,34 +22,27 @@ export const notion = new Client({
   auth: notionApiKey,
 });
 
-// Allowed categories based on user's Notion database setup
-// These are the EXACT category names that Gemini must return (case-sensitive)
-// Project: Business ideas, app ideas, work projects, brainstorming
-// Learning: Study, education, courses
-// Personal: Private notes, diary, thoughts
-// Task: To-dos, action items, reminders
-export const ALLOWED_CATEGORIES = [
-  'Project',
-  'Learning',
-  'Personal',
-  'Task',
-] as const;
+/**
+ * Get allowed categories from config file
+ * Categories are now loaded from config/categories.json
+ * See docs/CUSTOMIZE_CATEGORIES.md for customization instructions
+ */
+export function getAllowedCategories(): string[] {
+  return getCategoryNames();
+}
 
-export type Category = typeof ALLOWED_CATEGORIES[number];
-
-// Category to emoji icon mapping
-const CATEGORY_ICONS: Record<Category, string> = {
-  'Project': '🚀',     // Rocket for projects, business, ideas
-  'Learning': '📚',    // Books for learning
-  'Personal': '✨',    // Sparkles for personal notes
-  'Task': '✅',        // Checkmark for tasks
-};
+/**
+ * Category type - dynamically based on config
+ * Note: For type safety in tests, we use string instead of const assertion
+ */
+export type Category = string;
 
 /**
  * Gets the emoji icon for a category
+ * Now loaded from config file
  */
 export function getCategoryIcon(category: Category): string {
-  return CATEGORY_ICONS[category] || '📝'; // Default to memo emoji
+  return getIconFromConfig(category);
 }
 
 /**
@@ -55,8 +54,8 @@ export function getCategoryIcon(category: Category): string {
  */
 export function validateCategory(category: string): Category {
   // Check if it's a valid category (exact match, case-sensitive)
-  if (ALLOWED_CATEGORIES.includes(category as Category)) {
-    return category as Category;
+  if (isValidCategory(category)) {
+    return category;
   }
   
   // Fallback to Personal for invalid categories
