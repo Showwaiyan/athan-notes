@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { z } from 'zod';
-import { getAllowedCategories, type Category } from './notion';
-import { getAllCategories } from './categoryConfig';
+import { getAllowedCategories, type Category, createVoiceNotePage, type VoiceNoteData } from './notion';
+import { getAllCategories, getCategoryIcon } from './categoryConfig';
 
 // Initialize Gemini API
 const apiKey = process.env.GEMINI_API_KEY;
@@ -35,6 +35,12 @@ function buildProcessedNoteSchema() {
 }
 
 export type ProcessedNote = z.infer<ReturnType<typeof buildProcessedNoteSchema>>;
+
+// Extended type with additional fields returned by the API
+export type ProcessedNoteWithMetadata = ProcessedNote & {
+  categoryIcon?: string;
+  notionUrl?: string;
+};
 
 // Audio format validation
 const ALLOWED_MIME_TYPES = [
@@ -87,7 +93,7 @@ export function validateAudioFile(file: { size: number; type?: string }): {
 export async function processAudio(
   audioBuffer: Buffer,
   mimeType: string
-): Promise<ProcessedNote> {
+): Promise<ProcessedNoteWithMetadata> {
   try {
     // Use Gemini 2.5 Flash model (latest generation for multimodal tasks)
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
@@ -184,7 +190,28 @@ Language: All text fields (title, content, summary, tags) should be in Burmese (
     const ProcessedNoteSchema = buildProcessedNoteSchema();
     const validatedData = ProcessedNoteSchema.parse(parsedResponse);
 
-    return validatedData;
+    // Save to Notion
+    const voiceNoteData: VoiceNoteData = {
+      title: validatedData.title,
+      content: validatedData.content,
+      summary: validatedData.summary,
+      category: validatedData.category,
+      tags: validatedData.tags,
+    };
+
+    const notionResult = await createVoiceNotePage(voiceNoteData);
+
+    if (!notionResult.success) {
+      console.error('Failed to save to Notion:', notionResult.error);
+      throw new Error(`Failed to save to Notion: ${notionResult.error}`);
+    }
+
+    // Return data with icon and Notion URL
+    return {
+      ...validatedData,
+      categoryIcon: getCategoryIcon(validatedData.category),
+      notionUrl: notionResult.pageUrl,
+    };
   } catch (error) {
     console.error('Error processing audio with Gemini:', error);
     

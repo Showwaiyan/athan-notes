@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
-import { processAudio, validateAudioFile, type ProcessedNote } from '@/lib/gemini';
+import { processAudio, validateAudioFile, type ProcessedNoteWithMetadata } from '@/lib/gemini';
 
 /**
  * POST /api/process-audio
@@ -60,14 +60,11 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await audioFile.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Process with Gemini
-    const processedNote: ProcessedNote = await processAudio(buffer, mimeType);
+    // Process with Gemini and save to Notion
+    const processedNote: ProcessedNoteWithMetadata = await processAudio(buffer, mimeType);
 
-    // Return processed note
-    return NextResponse.json({
-      success: true,
-      data: processedNote,
-    }, { status: 200 });
+    // Return processed note (now includes categoryIcon and notionUrl)
+    return NextResponse.json(processedNote, { status: 200 });
 
   } catch (error) {
     console.error('Audio processing error:', error);
