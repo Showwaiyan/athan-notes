@@ -1,5 +1,6 @@
 import LogoutButton from "@/components/LogoutButton";
 import VoiceRecorder from "@/components/VoiceRecorder";
+import InstallPrompt from "@/components/InstallPrompt";
 
 export default function Home() {
   return (
@@ -14,6 +15,8 @@ export default function Home() {
         
         <VoiceRecorder />
       </div>
+      
+      <InstallPrompt />
     </div>
   );
 }
