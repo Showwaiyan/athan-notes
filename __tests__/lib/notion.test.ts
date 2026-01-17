@@ -4,7 +4,7 @@ import { jest } from '@jest/globals';
 // For functions that use the Notion client, we'll need to mock the module
 import {
   getCategoryIcon,
-  mapCategory,
+  validateCategory,
   truncateSummary,
   type VoiceNoteData,
 } from '../../lib/notion';
@@ -28,91 +28,41 @@ describe('lib/notion.ts', () => {
     });
   });
 
-  describe('mapCategory', () => {
-    describe('exact matches', () => {
-      test('maps exact category names', () => {
-        expect(mapCategory('Project')).toBe('Project');
-        expect(mapCategory('Learning')).toBe('Learning');
-        expect(mapCategory('Personal')).toBe('Personal');
-        expect(mapCategory('Task')).toBe('Task');
+  describe('validateCategory', () => {
+    describe('valid categories', () => {
+      test('validates exact category names (case-sensitive)', () => {
+        expect(validateCategory('Project')).toBe('Project');
+        expect(validateCategory('Learning')).toBe('Learning');
+        expect(validateCategory('Personal')).toBe('Personal');
+        expect(validateCategory('Task')).toBe('Task');
       });
     });
 
-    describe('lowercase variations', () => {
-      test('maps lowercase category names', () => {
-        expect(mapCategory('project')).toBe('Project');
-        expect(mapCategory('learning')).toBe('Learning');
-        expect(mapCategory('personal')).toBe('Personal');
-        expect(mapCategory('task')).toBe('Task');
+    describe('invalid categories fallback', () => {
+      test('falls back to Personal for lowercase variations', () => {
+        expect(validateCategory('project')).toBe('Personal');
+        expect(validateCategory('learning')).toBe('Personal');
+        expect(validateCategory('personal')).toBe('Personal');
+        expect(validateCategory('task')).toBe('Personal');
       });
 
-      test('maps plural forms', () => {
-        expect(mapCategory('projects')).toBe('Project');
-        expect(mapCategory('tasks')).toBe('Task');
-      });
-    });
-
-    describe('common synonyms', () => {
-      test('maps business/work-related synonyms to Project', () => {
-        expect(mapCategory('business')).toBe('Project');
-        expect(mapCategory('work')).toBe('Project');
-        expect(mapCategory('office')).toBe('Project');
-        expect(mapCategory('job')).toBe('Project');
-        expect(mapCategory('app')).toBe('Project');
-        expect(mapCategory('startup')).toBe('Project');
-      });
-
-      test('maps learning-related synonyms to Learning', () => {
-        expect(mapCategory('study')).toBe('Learning');
-        expect(mapCategory('education')).toBe('Learning');
-        expect(mapCategory('course')).toBe('Learning');
-      });
-
-      test('maps task-related synonyms to Task', () => {
-        expect(mapCategory('todo')).toBe('Task');
-        expect(mapCategory('to-do')).toBe('Task');
-        expect(mapCategory('action')).toBe('Task');
-        expect(mapCategory('reminder')).toBe('Task');
-      });
-
-      test('maps idea-related synonyms to Project', () => {
-        expect(mapCategory('idea')).toBe('Project');
-        expect(mapCategory('ideas')).toBe('Project');
-        expect(mapCategory('brainstorm')).toBe('Project');
-      });
-
-      test('maps personal-related synonyms to Personal', () => {
-        expect(mapCategory('private')).toBe('Personal');
-        expect(mapCategory('note')).toBe('Personal');
-        expect(mapCategory('notes')).toBe('Personal');
-        expect(mapCategory('diary')).toBe('Personal');
-        expect(mapCategory('thought')).toBe('Personal');
-        expect(mapCategory('thoughts')).toBe('Personal');
-      });
-    });
-
-    describe('fallback behavior', () => {
       test('falls back to Personal for unknown categories', () => {
-        expect(mapCategory('random')).toBe('Personal');
-        expect(mapCategory('unknown')).toBe('Personal');
-        expect(mapCategory('xyz123')).toBe('Personal');
+        expect(validateCategory('random')).toBe('Personal');
+        expect(validateCategory('unknown')).toBe('Personal');
+        expect(validateCategory('xyz123')).toBe('Personal');
       });
 
       test('falls back to Personal for empty string', () => {
-        expect(mapCategory('')).toBe('Personal');
+        expect(validateCategory('')).toBe('Personal');
       });
 
-      test('falls back to Personal for mixed case unknown', () => {
-        expect(mapCategory('RaNdOm')).toBe('Personal');
-      });
-
-      test('logs warning for unknown categories', () => {
+      test('logs warning for invalid categories', () => {
         const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
         
-        mapCategory('unknown_category');
+        validateCategory('invalid_category');
         
         expect(consoleWarnSpy).toHaveBeenCalledWith(
-          'Unknown category "unknown_category", using fallback: Personal'
+          'Invalid category "invalid_category", falling back to: Personal'
         );
         
         consoleWarnSpy.mockRestore();
