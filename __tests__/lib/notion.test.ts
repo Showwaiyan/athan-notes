@@ -1,5 +1,31 @@
 import { jest } from '@jest/globals';
 
+// Mock categoryConfig before importing notion module
+jest.mock('../../lib/categoryConfig', () => ({
+  getCategoryNames: jest.fn(() => ['Project', 'Learning', 'Personal', 'Task']),
+  getCategoryIcon: jest.fn((name: string) => {
+    const icons: Record<string, string> = {
+      'Project': '🚀',
+      'Learning': '📚',
+      'Personal': '✨',
+      'Task': '✅',
+    };
+    return icons[name] || '📝';
+  }),
+  isValidCategory: jest.fn((name: string) => {
+    return ['Project', 'Learning', 'Personal', 'Task'].includes(name);
+  }),
+  getAllCategories: jest.fn(() => [
+    { name: 'Project', icon: '🚀', description: 'Business ideas and projects' },
+    { name: 'Learning', icon: '📚', description: 'Study notes' },
+    { name: 'Personal', icon: '✨', description: 'Personal thoughts' },
+    { name: 'Task', icon: '✅', description: 'To-dos and tasks' },
+  ]),
+  getCategoryDescription: jest.fn(),
+  clearCategoryCache: jest.fn(),
+  loadCategoriesConfig: jest.fn(),
+}));
+
 // Import functions - we'll test the pure functions directly
 // For functions that use the Notion client, we'll need to mock the module
 import {
