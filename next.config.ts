@@ -58,10 +58,14 @@ export default withPWA({
     },
     {
       urlPattern: /\/api\/.*$/i,
-      handler: 'NetworkOnly',
+      handler: 'NetworkFirst',
       options: {
         cacheName: 'apis',
-        networkTimeoutSeconds: 10
+        networkTimeoutSeconds: 10,
+        expiration: {
+          maxEntries: 16,
+          maxAgeSeconds: 60 // 1 minute
+        }
       }
     }
   ]

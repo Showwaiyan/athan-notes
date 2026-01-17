@@ -16,13 +16,6 @@ export const metadata: Metadata = {
   title: "Athan Notes",
   description: "Your Idea into voice, goes to your Notion",
   manifest: "/manifest.json",
-  themeColor: "#ffffff",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -37,6 +30,14 @@ export const metadata: Metadata = {
       { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
     ],
   },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({
