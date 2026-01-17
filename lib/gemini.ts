@@ -75,8 +75,8 @@ export async function processAudio(
   mimeType: string
 ): Promise<ProcessedNote> {
   try {
-    // Use Gemini 2.0 Flash model (optimized for multimodal tasks)
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+    // Use Gemini 2.5 Flash model (latest generation for multimodal tasks)
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     // Convert buffer to base64
     const base64Audio = audioBuffer.toString('base64');
