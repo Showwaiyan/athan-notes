@@ -52,15 +52,7 @@ function LoginForm() {
   }
 
   return (
-    <div 
-      className="relative min-h-screen flex items-center justify-center bg-[#F0F2F4] overflow-hidden"
-      style={{
-        paddingTop: 'env(safe-area-inset-top)',
-        paddingBottom: 'env(safe-area-inset-bottom)',
-        paddingLeft: 'env(safe-area-inset-left)',
-        paddingRight: 'env(safe-area-inset-right)',
-      }}
-    >
+    <div className="relative min-h-screen flex items-center justify-center bg-[#F0F2F4] overflow-hidden">
       {/* Grain Noise Overlay */}
       <div className="absolute inset-0 z-0 pointer-events-none opacity-40 mix-blend-multiply"
         style={{
@@ -69,7 +61,12 @@ function LoginForm() {
       />
 
       {/* Global Background Particles - Dense Scatter of Medium/Tiny Dots */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden z-[5]">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-[5]"
+        style={{
+          paddingTop: 'env(safe-area-inset-top)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}
+      >
         <svg className="w-full h-full">
           {/* Fixed scattered dots to avoid hydration mismatch */}
           {[
@@ -116,7 +113,15 @@ function LoginForm() {
         </svg>
       </div>
 
-      <div className="w-full max-w-md px-6 relative z-10">
+      <div 
+        className="w-full max-w-md px-6 relative z-10"
+        style={{
+          paddingTop: 'env(safe-area-inset-top)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          paddingLeft: 'calc(1.5rem + env(safe-area-inset-left))',
+          paddingRight: 'calc(1.5rem + env(safe-area-inset-right))',
+        }}
+      >
         {/* Logo/Title */}
         <div className="text-center mb-12 relative">
           <h1 className={`${pinyonScript.className} text-7xl text-[#1a1a1a] mb-2 relative flex items-center justify-center`}>
@@ -239,13 +244,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div 
-        className="min-h-screen flex items-center justify-center bg-white"
-        style={{
-          paddingTop: 'env(safe-area-inset-top)',
-          paddingBottom: 'env(safe-area-inset-bottom)',
-        }}
-      >
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-[#787774]">Loading...</div>
       </div>
     }>
