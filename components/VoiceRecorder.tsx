@@ -20,11 +20,11 @@ export default function VoiceRecorder() {
   const [recordingState, setRecordingState] = useState<RecordingState>('idle')
   const [duration, setDuration] = useState(0)
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
-  
+
   // Processing state
   const [processedNote, setProcessedNote] = useState<ProcessedNote | null>(null)
   const [error, setError] = useState<string | null>(null)
-  
+
   // Refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
@@ -93,13 +93,13 @@ export default function VoiceRecorder() {
       timerRef.current = setInterval(() => {
         setDuration(prev => {
           const newDuration = prev + 1
-          
+
           // Auto-stop at max duration
           if (newDuration >= MAX_DURATION) {
             stopRecording()
             return MAX_DURATION
           }
-          
+
           return newDuration
         })
       }, 1000)
@@ -124,7 +124,7 @@ export default function VoiceRecorder() {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.pause()
       setRecordingState('paused')
-      
+
       if (timerRef.current) {
         clearInterval(timerRef.current)
         timerRef.current = null
@@ -137,17 +137,17 @@ export default function VoiceRecorder() {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'paused') {
       mediaRecorderRef.current.resume()
       setRecordingState('recording')
-      
+
       // Restart timer
       timerRef.current = setInterval(() => {
         setDuration(prev => {
           const newDuration = prev + 1
-          
+
           if (newDuration >= MAX_DURATION) {
             stopRecording()
             return MAX_DURATION
           }
-          
+
           return newDuration
         })
       }, 1000)
@@ -206,7 +206,7 @@ export default function VoiceRecorder() {
   return (
     <div className="space-y-6">
       {/* Recording Section */}
-      <div className="bg-white rounded-lg border border-[#e0e0e0] p-8">
+      <div className="bg-white/60 backdrop-blur-sm border border-white/50 rounded-lg p-8 shadow-sm">
         <h2 className="text-xl font-medium text-[#37352f] mb-6">
           🎙️ Record Voice Note
         </h2>
@@ -241,7 +241,7 @@ export default function VoiceRecorder() {
           {recordingState === 'idle' && !audioBlob && (
             <button
               onClick={startRecording}
-              className="px-6 py-3 bg-[#37352f] text-white rounded-lg font-medium hover:bg-[#2e2c28] transition-colors"
+              className="px-6 py-3 bg-[#1a1a1a] text-white rounded-md font-medium hover:bg-[#333] active:bg-[#000] transition-all duration-150 shadow-sm"
             >
               Start Recording
             </button>
@@ -285,13 +285,13 @@ export default function VoiceRecorder() {
             <>
               <button
                 onClick={processAudio}
-                className="px-6 py-3 bg-[#37352f] text-white rounded-lg font-medium hover:bg-[#2e2c28] transition-colors"
+                className="px-6 py-3 bg-[#1a1a1a] text-white rounded-md font-medium hover:bg-[#333] active:bg-[#000] transition-all duration-150 shadow-sm"
               >
                 Process & Save to Notion
               </button>
               <button
                 onClick={reset}
-                className="px-6 py-3 bg-white text-[#37352f] border border-[#e0e0e0] rounded-lg font-medium hover:bg-[#f7f6f3] transition-colors"
+                className="px-6 py-3 bg-white/80 text-[#37352f] border border-[#d3d1cb] rounded-md font-medium hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#2383e2] focus:border-transparent transition-all duration-150"
               >
                 Discard
               </button>
@@ -308,7 +308,7 @@ export default function VoiceRecorder() {
           {recordingState === 'completed' && (
             <button
               onClick={reset}
-              className="px-6 py-3 bg-[#37352f] text-white rounded-lg font-medium hover:bg-[#2e2c28] transition-colors"
+              className="px-6 py-3 bg-[#1a1a1a] text-white rounded-md font-medium hover:bg-[#333] active:bg-[#000] transition-all duration-150 shadow-sm"
             >
               Record New Note
             </button>
@@ -317,7 +317,7 @@ export default function VoiceRecorder() {
           {recordingState === 'error' && (
             <button
               onClick={reset}
-              className="px-6 py-3 bg-[#37352f] text-white rounded-lg font-medium hover:bg-[#2e2c28] transition-colors"
+              className="px-6 py-3 bg-[#1a1a1a] text-white rounded-md font-medium hover:bg-[#333] active:bg-[#000] transition-all duration-150 shadow-sm"
             >
               Try Again
             </button>
@@ -336,7 +336,7 @@ export default function VoiceRecorder() {
 
       {/* Result Display */}
       {processedNote && (
-        <div className="bg-white rounded-lg border border-[#e0e0e0] p-8">
+        <div className="bg-white/60 backdrop-blur-sm border border-white/50 rounded-lg p-8 shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-medium text-[#37352f]">
               ✅ Note Saved to Notion
@@ -346,7 +346,7 @@ export default function VoiceRecorder() {
                 href={processedNote.notionUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 bg-[#37352f] text-white text-sm rounded-lg hover:bg-[#2e2c28] transition-colors"
+                className="px-4 py-2 bg-[#1a1a1a] text-white text-sm rounded-md hover:bg-[#333] active:bg-[#000] transition-all duration-150 shadow-sm"
               >
                 Open in Notion
               </a>
@@ -369,7 +369,7 @@ export default function VoiceRecorder() {
                 {processedNote.categoryIcon && `${processedNote.categoryIcon} `}{processedNote.category}
               </span>
             </div>
-            
+
             {processedNote.tags.length > 0 && (
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-[#787774]">Tags:</span>
