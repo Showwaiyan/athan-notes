@@ -11,7 +11,9 @@ export async function verifyCredentials(
   password: string
 ): Promise<boolean> {
   const envUsername = process.env.APP_USERNAME;
-  const envPasswordHash = process.env.APP_PASSWORD_HASH;
+  // Remove backslashes from password hash to support both local (.env.local with escaped \$)
+  // and Vercel (raw value with literal backslashes) environments
+  const envPasswordHash = process.env.APP_PASSWORD_HASH?.replace(/\\/g, '');
 
   // Check if environment variables are set
   if (!envUsername || !envPasswordHash) {

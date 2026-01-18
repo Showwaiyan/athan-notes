@@ -27,7 +27,9 @@ rl.question('Enter your password: ', (password) => {
   console.log('\n✅ Password hash generated successfully!\n');
   console.log('Copy this line to your .env.local file:\n');
   console.log(`APP_PASSWORD_HASH=${escapedHash}\n`);
-  console.log('⚠️  Note: The backslashes (\\) before $ are required!\n');
+  console.log('⚠️  For local .env.local: Use the escaped version above (with \\$)');
+  console.log('⚠️  For Vercel dashboard: Use the SAME escaped version (with \\$)\n');
+  console.log('    The app will automatically handle both environments.\n');
   
   // Verify the hash works
   const isValid = bcrypt.compareSync(password, hash);
