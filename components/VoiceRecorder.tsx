@@ -313,6 +313,15 @@ export default function VoiceRecorder() {
               Record New Note
             </button>
           )}
+
+          {recordingState === 'error' && (
+            <button
+              onClick={reset}
+              className="px-6 py-3 bg-[#37352f] text-white rounded-lg font-medium hover:bg-[#2e2c28] transition-colors"
+            >
+              Try Again
+            </button>
+          )}
         </div>
 
         {/* Error Display */}
