@@ -58,12 +58,7 @@ export default function InstallPrompt() {
   }
 
   return (
-    <div 
-      className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-auto z-50"
-      style={{
-        paddingBottom: 'env(safe-area-inset-bottom)',
-      }}
-    >
+    <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-auto z-50">
       <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-4 flex items-center gap-3">
         <div className="flex-1">
           <p className="text-sm font-medium text-gray-900">Install Athan Notes</p>

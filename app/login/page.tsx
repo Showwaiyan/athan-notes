@@ -52,7 +52,15 @@ function LoginForm() {
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-[#F0F2F4] overflow-hidden">
+    <div 
+      className="relative min-h-screen flex items-center justify-center bg-[#F0F2F4] overflow-hidden"
+      style={{
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+        paddingLeft: 'env(safe-area-inset-left)',
+        paddingRight: 'env(safe-area-inset-right)',
+      }}
+    >
       {/* Grain Noise Overlay */}
       <div className="absolute inset-0 z-0 pointer-events-none opacity-40 mix-blend-multiply"
         style={{
@@ -231,7 +239,13 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div 
+        className="min-h-screen flex items-center justify-center bg-white"
+        style={{
+          paddingTop: 'env(safe-area-inset-top)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}
+      >
         <div className="text-[#787774]">Loading...</div>
       </div>
     }>
