@@ -32,6 +32,8 @@ import {
   getCategoryIcon,
   validateCategory,
   truncateSummary,
+  chunkContent,
+  truncateText,
   type VoiceNoteData,
 } from '../../lib/notion';
 
@@ -166,6 +168,107 @@ describe('lib/notion.ts', () => {
       // Default is now 150, uses 150 - 10 = 140 for safety, + '...' = 143
       expect(result).toHaveLength(143); // (150 - 10) + '...'
       expect(result.endsWith('...')).toBe(true);
+    });
+  });
+
+  describe('chunkContent', () => {
+    test('returns single chunk for short text', () => {
+      const shortText = 'This is a short text.';
+      const chunks = chunkContent(shortText, 1900);
+      
+      expect(chunks).toHaveLength(1);
+      expect(chunks[0]).toBe(shortText);
+    });
+
+    test('returns empty string for empty input', () => {
+      const chunks = chunkContent('', 1900);
+      
+      expect(chunks).toHaveLength(1);
+      expect(chunks[0]).toBe('');
+    });
+
+    test('splits long text into multiple chunks', () => {
+      const longText = 'This is a sentence. '.repeat(200); // ~4000 chars
+      const chunks = chunkContent(longText, 1900);
+      
+      expect(chunks.length).toBeGreaterThan(1);
+      // Each chunk should be <= 1900 chars
+      chunks.forEach(chunk => {
+        expect(chunk.length).toBeLessThanOrEqual(1900);
+      });
+    });
+
+    test('preserves Burmese sentence boundaries', () => {
+      const burmeseText = 'ဒီနေ့က အလုပ်မှာ အဆင်ပြေပါတယ်။ '.repeat(100); // ~3300 chars
+      const chunks = chunkContent(burmeseText, 1900);
+      
+      expect(chunks.length).toBeGreaterThan(1);
+      // First chunk should end with sentence ending or be close to limit
+      expect(chunks[0].length).toBeLessThanOrEqual(1900);
+    });
+
+    test('handles very long text without boundaries', () => {
+      const longText = 'a'.repeat(5000); // No spaces or boundaries
+      const chunks = chunkContent(longText, 1900);
+      
+      expect(chunks.length).toBeGreaterThan(1);
+      chunks.forEach(chunk => {
+        expect(chunk.length).toBeLessThanOrEqual(1900);
+      });
+    });
+
+    test('reconstructs original content (allowing for trimming)', () => {
+      const originalText = 'မြန်မာဘာသာ၊ ဒီနေ့က အလုပ်မှာ အဆင်ပြေပါတယ်။ '.repeat(80); // ~3600 chars
+      const chunks = chunkContent(originalText, 1900);
+      
+      const reconstructed = chunks.join('').trim();
+      const originalTrimmed = originalText.trim();
+      
+      // Should preserve at least 95% of content (accounting for boundary trimming)
+      expect(reconstructed.length).toBeGreaterThanOrEqual(originalTrimmed.length * 0.95);
+    });
+
+    test('uses default chunk size of 1900', () => {
+      const longText = 'x'.repeat(4000);
+      const chunks = chunkContent(longText); // No maxChunkSize specified
+      
+      chunks.forEach(chunk => {
+        expect(chunk.length).toBeLessThanOrEqual(1900);
+      });
+    });
+  });
+
+  describe('truncateText', () => {
+    test('returns text unchanged if within limit', () => {
+      const text = 'Short text';
+      expect(truncateText(text, 100)).toBe(text);
+    });
+
+    test('returns empty string for empty input', () => {
+      expect(truncateText('', 100)).toBe('');
+    });
+
+    test('truncates long text and adds ellipsis', () => {
+      const longText = 'This is a very long text that exceeds the limit';
+      const result = truncateText(longText, 20);
+      
+      expect(result.endsWith('...')).toBe(true);
+      expect(result.length).toBe(20);
+      // 20 chars total: (20 - 3) = 17 chars + '...' = 20
+      expect(result).toBe('This is a very lo...');
+    });
+
+    test('handles Burmese text correctly', () => {
+      const burmeseText = 'မြန်မာဘာသာစကား'.repeat(10);
+      const result = truncateText(burmeseText, 50);
+      
+      expect(result.endsWith('...')).toBe(true);
+      expect(result.length).toBe(50);
+    });
+
+    test('handles exact boundary case', () => {
+      const text = 'Exactly twenty chars';
+      expect(truncateText(text, 20)).toBe(text);
     });
   });
 

@@ -94,7 +94,22 @@ export function cleanupExpiredEntries(): void {
   }
 }
 
-// Run cleanup every hour
-if (typeof global !== 'undefined') {
-  setInterval(cleanupExpiredEntries, 60 * 60 * 1000);
+// Run cleanup every hour (only in non-test environments)
+// Note: setInterval keeps the process alive, so we only run it when needed
+let cleanupInterval: NodeJS.Timeout | null = null;
+
+if (typeof global !== 'undefined' && process.env.NODE_ENV !== 'test') {
+  cleanupInterval = setInterval(cleanupExpiredEntries, 60 * 60 * 1000);
+  // Don't keep the process alive just for cleanup
+  cleanupInterval.unref();
+}
+
+/**
+ * Clear the cleanup interval (useful for testing)
+ */
+export function stopCleanup(): void {
+  if (cleanupInterval) {
+    clearInterval(cleanupInterval);
+    cleanupInterval = null;
+  }
 }

@@ -98,6 +98,70 @@ export function truncateSummary(text: string, maxLength: number = 150): string {
 }
 
 /**
+ * Chunks long text into smaller pieces that fit within Notion's character limits
+ * Notion API limit: 2000 characters per rich_text block
+ * 
+ * @param text - The text to chunk
+ * @param maxChunkSize - Maximum size per chunk (default: 1900 for safety margin)
+ * @returns Array of text chunks
+ */
+export function chunkContent(text: string, maxChunkSize: number = 1900): string[] {
+  if (!text) {
+    return [''];
+  }
+  
+  // If text fits in one chunk, return as-is
+  if (text.length <= maxChunkSize) {
+    return [text];
+  }
+  
+  const chunks: string[] = [];
+  let remainingText = text;
+  
+  while (remainingText.length > 0) {
+    if (remainingText.length <= maxChunkSize) {
+      // Last chunk
+      chunks.push(remainingText);
+      break;
+    }
+    
+    // Find a good breaking point (prefer sentence/word boundaries)
+    let breakPoint = maxChunkSize;
+    const searchStart = Math.max(0, maxChunkSize - 200); // Search last 200 chars for boundary
+    
+    // Look for Burmese sentence ending
+    const burmeseEnd = remainingText.lastIndexOf('။', maxChunkSize);
+    const burmeseComma = remainingText.lastIndexOf('၊', maxChunkSize);
+    const newline = remainingText.lastIndexOf('\n', maxChunkSize);
+    const space = remainingText.lastIndexOf(' ', maxChunkSize);
+    
+    // Use the best boundary we can find
+    const boundaries = [burmeseEnd, burmeseComma, newline, space].filter(pos => pos >= searchStart);
+    if (boundaries.length > 0) {
+      breakPoint = Math.max(...boundaries) + 1; // +1 to include the boundary character
+    }
+    
+    // Extract chunk and continue with remainder
+    const chunk = remainingText.substring(0, breakPoint).trim();
+    chunks.push(chunk);
+    remainingText = remainingText.substring(breakPoint).trim();
+  }
+  
+  return chunks;
+}
+
+/**
+ * Truncates a string to a maximum length
+ * Used for title and tag validation to prevent Notion API errors
+ */
+export function truncateText(text: string, maxLength: number): string {
+  if (!text || text.length <= maxLength) {
+    return text;
+  }
+  return text.substring(0, maxLength - 3) + '...';
+}
+
+/**
  * Validates that the Notion database exists and is accessible
  */
 export async function validateDatabase(): Promise<boolean> {
@@ -164,12 +228,12 @@ export async function createVoiceNotePage(
         emoji: categoryIcon,
       },
       properties: {
-        // Title property - try common names
+        // Title property - truncate to prevent Notion API errors (2000 char limit, recommend 100)
         Name: {
           title: [
             {
               text: {
-                content: data.title,
+                content: truncateText(data.title, 100),
               },
             },
           ],
@@ -190,30 +254,29 @@ export async function createVoiceNotePage(
             name: validatedCategory,
           },
         },
-        // Tags property (multi-select)
+        // Tags property (multi-select) - truncate each tag to prevent errors (100 char limit)
         Tags: {
           multi_select: data.tags.map((tag) => ({
-            name: tag,
+            name: truncateText(tag, 100),
           })),
         },
       },
       // Page body content (full transcription)
-      children: [
-        {
-          object: 'block',
-          type: 'paragraph',
-          paragraph: {
-            rich_text: [
-              {
-                type: 'text',
-                text: {
-                  content: data.content,
-                },
+      // Split long content into multiple paragraph blocks to respect Notion's 2000-char limit
+      children: chunkContent(data.content, 1900).map((chunk) => ({
+        object: 'block',
+        type: 'paragraph',
+        paragraph: {
+          rich_text: [
+            {
+              type: 'text',
+              text: {
+                content: chunk,
               },
-            ],
-          },
+            },
+          ],
         },
-      ],
+      })),
     });
 
     // Extract page URL and ID from response
