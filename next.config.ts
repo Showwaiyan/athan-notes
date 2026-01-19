@@ -4,6 +4,57 @@ import withPWA from 'next-pwa';
 
 const nextConfig: NextConfig = {
   /* config options here */
+  async headers() {
+    return [
+      {
+        // Apply security headers to all routes
+        source: '/:path*',
+        headers: [
+          {
+            // Prevent clickjacking attacks
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            // Prevent MIME type sniffing
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            // Enable browser XSS protection
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+          {
+            // Control referrer information
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
+            // Content Security Policy
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // unsafe-inline needed for Next.js
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "font-src 'self' https://fonts.gstatic.com",
+              "img-src 'self' data: blob:",
+              "media-src 'self' blob:", // blob: needed for audio recording
+              "connect-src 'self' https://generativelanguage.googleapis.com https://api.notion.com",
+              "frame-ancestors 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join('; '),
+          },
+          {
+            // Permissions Policy (formerly Feature-Policy)
+            key: 'Permissions-Policy',
+            value: 'microphone=(self), camera=(), geolocation=(), payment=()',
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default withPWA({
