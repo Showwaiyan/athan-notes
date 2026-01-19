@@ -3,13 +3,22 @@ import VoiceRecorder from "@/components/VoiceRecorder";
 import InstallPrompt from "@/components/InstallPrompt";
 import ThemeBackground from "@/components/ThemeBackground";
 import { Pinyon_Script } from 'next/font/google';
+import { redirect } from 'next/navigation';
+import { getSession } from '@/lib/session';
 
 const pinyonScript = Pinyon_Script({
   weight: '400',
   subsets: ['latin'],
 });
 
-export default function Home() {
+export default async function Home() {
+  // SERVER-SIDE AUTHENTICATION CHECK
+  const session = await getSession();
+  
+  if (!session.isLoggedIn) {
+    redirect('/login');
+  }
+
   return (
     <div className="min-h-screen bg-[#F0F2F4] relative">
       <ThemeBackground />

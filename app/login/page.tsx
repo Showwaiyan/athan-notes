@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, FormEvent, Suspense } from 'react'
+import { useState, FormEvent, Suspense, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Pinyon_Script } from 'next/font/google'
 import ThemeBackground from '@/components/ThemeBackground'
@@ -19,6 +19,20 @@ function LoginForm() {
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // Check if already logged in and redirect
+  useEffect(() => {
+    fetch('/api/auth/check')
+      .then(res => res.json())
+      .then(data => {
+        if (data.isLoggedIn) {
+          router.push(redirectTo)
+        }
+      })
+      .catch(() => {
+        // Ignore errors, user can still try to login
+      })
+  }, [router, redirectTo])
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()

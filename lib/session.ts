@@ -13,6 +13,12 @@ export interface SessionData {
 /**
  * Iron-session configuration
  * Uses environment variables for security
+ * 
+ * NOTE: NODE_ENV is automatically set by Next.js:
+ *   - npm run dev   → NODE_ENV=development (cookies work on HTTP)
+ *   - npm run build → NODE_ENV=production (cookies require HTTPS)
+ *   - Vercel        → NODE_ENV=production (always)
+ * Do NOT add NODE_ENV to .env.local - Next.js handles it automatically
  */
 export const sessionOptions: SessionOptions = {
   password: process.env.SESSION_SECRET as string,

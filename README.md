@@ -387,6 +387,70 @@ Check [docs/CUSTOMIZE_CATEGORIES.md](docs/CUSTOMIZE_CATEGORIES.md) for detailed 
 
 ---
 
+## 🔒 Security
+
+Athan Notes is built with security as a priority. Your voice notes and personal data are protected using industry-standard security practices.
+
+### Security Features
+
+- 🔐 **Encrypted Sessions:** AES-256 encrypted cookies with iron-session
+- 🔑 **Password Hashing:** bcrypt with 10 rounds (salted)
+- 🌐 **HTTPS Only:** All traffic encrypted with TLS 1.3 on Vercel
+- 🍪 **Secure Cookies:** httpOnly, secure, sameSite flags enabled
+- 🛡️ **XSS Protection:** JavaScript cannot access session cookies
+- 🚫 **CSRF Protection:** Cross-site requests blocked
+- ⏰ **Session Expiry:** Auto-logout after 4 days
+- 🚪 **Instant Logout:** Destroy session immediately when needed
+
+### Security Documentation
+
+For detailed security information, please read:
+
+- **[Security Guide](docs/SECURITY.md)** - Comprehensive security documentation
+  - How your data is protected
+  - Authentication system details
+  - Best practices for safe usage
+  - What to do if attacked
+  - Technical security details
+  - FAQ
+
+- **[Security Quick Guide](docs/SECURITY_QUICK_GUIDE.md)** - TL;DR version
+  - Quick do's and don'ts
+  - Emergency response checklist
+  - Monthly security checklist
+  - Common questions
+
+- **[Security Architecture](docs/SECURITY_ARCHITECTURE.md)** - Visual diagrams
+  - Security layer architecture
+  - Data flow with security annotations
+  - Attack prevention mechanisms
+  - Password security deep dive
+
+### Quick Security Tips
+
+✅ **DO:**
+- Use a strong password (12+ characters, mixed case, numbers, symbols)
+- Lock your device when not in use
+- Logout when finished using the app
+- Keep browser and OS updated
+- Only install trusted browser extensions
+
+❌ **DON'T:**
+- Use the app on public/shared computers
+- Share your session cookies
+- Leave your device unlocked
+- Commit `.env.local` to Git
+- Ignore suspicious activity in Notion
+
+### Reporting Security Issues
+
+If you discover a security vulnerability:
+- **DO NOT** open a public GitHub issue
+- Contact the developer privately
+- Include details and steps to reproduce
+
+---
+
 ## Contributing
 
 Contributions are welcome! Please:
