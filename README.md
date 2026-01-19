@@ -1,5 +1,7 @@
 # Athan Notes 🎙️
 
+<a href="https://www.buymeacoffee.com/Showwaiyan" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+
 A Next.js Progressive Web App (PWA) that records Burmese voice notes, transcribes and structures them using Gemini AI, and automatically saves them to Notion.
 
 **Perfect for:** Capturing ideas, taking notes, and organizing thoughts in Burmese language through voice - anywhere, anytime, on any device.
@@ -38,7 +40,6 @@ Complete documentation is available in the `docs/` folder:
 - **[Security Overview](docs/SECURITY.md)** - Comprehensive security documentation (32 KB)
 - **[Security Quick Guide](docs/SECURITY_QUICK_GUIDE.md)** - TL;DR version with checklists
 - **[Security Architecture](docs/SECURITY_ARCHITECTURE.md)** - Visual diagrams and technical details
-- **[Security Audit Report](docs/SECURITY_AUDIT_REPORT.md)** - Complete security audit findings
 
 ### API Reference
 - **[API Documentation](docs/API_DOCUMENTATION.md)** - Complete API reference for all endpoints with examples
@@ -102,7 +103,7 @@ Complete documentation is available in the `docs/` folder:
    npm run generate-secret
    
    # Generate password hash
-   npm run hash-password YourSecurePassword123
+   npm run hash-password 
    ```
 
 4. **Set up environment variables:**
@@ -249,7 +250,7 @@ SESSION_MAX_AGE=345600
 **Password Hash:**
 ```bash
 # Use the provided script
-npm run hash-password YourSecurePassword123
+npm run hash-password
 
 # Output: $2b$10$RNLyaKjxBEkMi5XiuQGh3uZ6...
 ```
@@ -807,7 +808,7 @@ Special thanks to all contributors and users who make this project better!
 - 📖 **Documentation:** See `docs/` folder for comprehensive guides
 - 🐛 **Bug Reports:** [GitHub Issues](https://github.com/Showwaiyan/athan-notes/issues)
 - 💬 **Discussions:** [GitHub Discussions](https://github.com/Showwaiyan/athan-notes/discussions)
-- 📧 **Contact:** Open an issue or discussion
+- 📧 **Contact:** Open an issue or discussion OR [Email me](mailto:showwaiyan555@gmail.com)
 
 ### Stay Updated
 
