@@ -80,6 +80,10 @@ export async function POST(request: NextRequest) {
         statusCode = 502; // Bad Gateway - Gemini returned invalid data
       } else if (error.message.includes('GEMINI_API_KEY')) {
         statusCode = 500; // Server configuration error
+      } else if (error.message.includes('timeout') || error.message.includes('overloaded')) {
+        statusCode = 503; // Service Unavailable - All models timed out or overloaded
+      } else if (error.message.includes('rate limit') || error.message.includes('quota')) {
+        statusCode = 429; // Too Many Requests - Rate limit exceeded
       }
     }
     

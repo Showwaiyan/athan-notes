@@ -57,6 +57,18 @@ const ALLOWED_MIME_TYPES = [
 const MAX_AUDIO_DURATION_MS = 15 * 60 * 1000; // 15 minutes in milliseconds
 const MAX_AUDIO_SIZE_BYTES = 50 * 1024 * 1024; // 50MB
 
+// Gemini model fallback configuration
+// Models are tried in order. If primary fails with transient errors (503, 429, 500),
+// the next model in the list is attempted automatically.
+const GEMINI_MODELS = [
+  'gemini-2.5-flash',      // Primary: Latest generation multimodal model
+  'gemini-1.5-flash',      // Fallback 1: Stable, well-tested model
+  'gemini-1.5-flash-8b',   // Fallback 2: Lightweight, high availability
+];
+
+// Timeout per model attempt (60 seconds)
+const MODEL_TIMEOUT_MS = 60 * 1000;
+
 /**
  * Validates audio file format and size
  */
@@ -84,7 +96,75 @@ export function validateAudioFile(file: { size: number; type?: string }): {
 }
 
 /**
+ * Checks if an error is a transient error that should trigger model fallback
+ * Transient errors: 503 (Service Unavailable), 429 (Rate Limit), 500 (Internal Server Error)
+ */
+function isTransientError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+  
+  const errorMessage = error.message.toLowerCase();
+  
+  // Check for HTTP status codes in error message
+  const has503 = errorMessage.includes('503') || errorMessage.includes('service unavailable') || errorMessage.includes('overloaded');
+  const has429 = errorMessage.includes('429') || errorMessage.includes('rate limit') || errorMessage.includes('quota exceeded');
+  const has500 = errorMessage.includes('500') || errorMessage.includes('internal server error');
+  
+  return has503 || has429 || has500;
+}
+
+/**
+ * Wraps a promise with a timeout
+ * Rejects if the promise doesn't resolve within the specified timeout
+ */
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error(`Request timeout after ${timeoutMs / 1000} seconds`));
+      }, timeoutMs);
+    }),
+  ]);
+}
+
+/**
+ * Attempts to generate content using a specific Gemini model with timeout
+ * 
+ * @param modelName - The Gemini model to use
+ * @param base64Audio - Base64-encoded audio data
+ * @param mimeType - MIME type of the audio
+ * @param prompt - The prompt to send to the model
+ * @returns The generated text response
+ */
+async function tryGenerateWithModel(
+  modelName: string,
+  base64Audio: string,
+  mimeType: string,
+  prompt: string
+): Promise<string> {
+  const model = genAI.getGenerativeModel({ model: modelName });
+  
+  const generationPromise = model.generateContent([
+    {
+      inlineData: {
+        mimeType,
+        data: base64Audio,
+      },
+    },
+    { text: prompt },
+  ]);
+  
+  // Apply timeout to the generation request
+  const result = await withTimeout(generationPromise, MODEL_TIMEOUT_MS);
+  const response = await result.response;
+  return response.text();
+}
+
+/**
  * Processes audio file with Gemini AI to extract structured data
+ * Automatically falls back to alternative models if primary model fails with transient errors
  * 
  * @param audioBuffer - Audio file buffer
  * @param mimeType - MIME type of the audio file
@@ -94,27 +174,23 @@ export async function processAudio(
   audioBuffer: Buffer,
   mimeType: string
 ): Promise<ProcessedNoteWithMetadata> {
-  try {
-    // Use Gemini 2.5 Flash model (latest generation for multimodal tasks)
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  // Convert buffer to base64 once (shared across all model attempts)
+  const base64Audio = audioBuffer.toString('base64');
 
-    // Convert buffer to base64
-    const base64Audio = audioBuffer.toString('base64');
+  // Get categories from config for dynamic prompt generation
+  const categories = getAllCategories();
+  const categoryNames = categories.map(c => c.name);
+  
+  // Build category descriptions for prompt
+  const categoryDescriptions = categories.map(c => 
+    `- ${c.name}: ${c.description}`
+  ).join('\n');
+  
+  // Build list of exact category names for validation reminder
+  const categoryList = categoryNames.map(name => `"${name}"`).join(', ');
 
-    // Get categories from config for dynamic prompt generation
-    const categories = getAllCategories();
-    const categoryNames = categories.map(c => c.name);
-    
-    // Build category descriptions for prompt
-    const categoryDescriptions = categories.map(c => 
-      `- ${c.name}: ${c.description}`
-    ).join('\n');
-    
-    // Build list of exact category names for validation reminder
-    const categoryList = categoryNames.map(name => `"${name}"`).join(', ');
-
-    // Craft the prompt with strong category constraints (using config categories)
-    const prompt = `
+  // Craft the prompt with strong category constraints (using config categories)
+  const prompt = `
 You are analyzing a Burmese voice note. Follow these steps PRECISELY:
 
 STEP 1: TRANSCRIBE & CORRECT
@@ -187,70 +263,91 @@ Language Rules:
 - tags: English only
 `;
 
-    // Generate content with audio
-    const result = await model.generateContent([
-      {
-        inlineData: {
-          mimeType,
-          data: base64Audio,
-        },
-      },
-      { text: prompt },
-    ]);
-
-    const response = await result.response;
-    const text = response.text();
-
-    // Parse JSON response
-    let parsedResponse;
+  let lastError: Error | null = null;
+  
+  // Try each model in sequence until one succeeds
+  for (let i = 0; i < GEMINI_MODELS.length; i++) {
+    const modelName = GEMINI_MODELS[i];
+    
     try {
-      // Try to extract JSON from markdown code blocks if present
-      const jsonMatch = text.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
-      const jsonText = jsonMatch ? jsonMatch[1] : text;
-      parsedResponse = JSON.parse(jsonText);
-    } catch (parseError) {
-      console.error('Failed to parse Gemini response:', text);
-      throw new Error('Gemini returned invalid JSON response');
+      console.log(`Attempting to process audio with model: ${modelName}`);
+      
+      // Try to generate content with this model
+      const text = await tryGenerateWithModel(modelName, base64Audio, mimeType, prompt);
+
+      // Parse JSON response
+      let parsedResponse;
+      try {
+        // Try to extract JSON from markdown code blocks if present
+        const jsonMatch = text.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
+        const jsonText = jsonMatch ? jsonMatch[1] : text;
+        parsedResponse = JSON.parse(jsonText);
+      } catch (parseError) {
+        console.error('Failed to parse Gemini response:', text);
+        throw new Error('Gemini returned invalid JSON response');
+      }
+
+      // Validate response with Zod (build schema dynamically)
+      const ProcessedNoteSchema = buildProcessedNoteSchema();
+      const validatedData = ProcessedNoteSchema.parse(parsedResponse);
+
+      // Save to Notion
+      const voiceNoteData: VoiceNoteData = {
+        title: validatedData.title,
+        content: validatedData.content,
+        summary: validatedData.summary,
+        category: validatedData.category,
+        tags: validatedData.tags,
+      };
+
+      const notionResult = await createVoiceNotePage(voiceNoteData);
+
+      if (!notionResult.success) {
+        console.error('Failed to save to Notion:', notionResult.error);
+        throw new Error(`Failed to save to Notion: ${notionResult.error}`);
+      }
+
+      // Success! Return data with icon and Notion URL
+      console.log(`Successfully processed audio with model: ${modelName}`);
+      return {
+        ...validatedData,
+        categoryIcon: getCategoryIcon(validatedData.category),
+        notionUrl: notionResult.pageUrl,
+      };
+      
+    } catch (error) {
+      console.error(`Model ${modelName} failed:`, error);
+      lastError = error instanceof Error ? error : new Error('Unknown error');
+      
+      // Check if this is a transient error and we have more models to try
+      const isLastModel = i === GEMINI_MODELS.length - 1;
+      
+      if (isTransientError(error) && !isLastModel) {
+        // This is a transient error and we have fallback models, continue to next model
+        console.log(`Transient error detected, trying next model...`);
+        continue;
+      } else if (!isLastModel && lastError.message.includes('timeout')) {
+        // Timeout error, try next model
+        console.log(`Timeout detected, trying next model...`);
+        continue;
+      } else {
+        // Non-transient error, or this was the last model - propagate the error
+        break;
+      }
     }
-
-    // Validate response with Zod (build schema dynamically)
-    const ProcessedNoteSchema = buildProcessedNoteSchema();
-    const validatedData = ProcessedNoteSchema.parse(parsedResponse);
-
-    // Save to Notion
-    const voiceNoteData: VoiceNoteData = {
-      title: validatedData.title,
-      content: validatedData.content,
-      summary: validatedData.summary,
-      category: validatedData.category,
-      tags: validatedData.tags,
-    };
-
-    const notionResult = await createVoiceNotePage(voiceNoteData);
-
-    if (!notionResult.success) {
-      console.error('Failed to save to Notion:', notionResult.error);
-      throw new Error(`Failed to save to Notion: ${notionResult.error}`);
-    }
-
-    // Return data with icon and Notion URL
-    return {
-      ...validatedData,
-      categoryIcon: getCategoryIcon(validatedData.category),
-      notionUrl: notionResult.pageUrl,
-    };
-  } catch (error) {
-    console.error('Error processing audio with Gemini:', error);
-    
-    if (error instanceof z.ZodError) {
-      const issues = error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ');
-      throw new Error(`Invalid response format from Gemini: ${issues}`);
-    }
-    
-    if (error instanceof Error) {
-      throw new Error(`Failed to process audio: ${error.message}`);
-    }
-    
-    throw new Error('Unknown error occurred while processing audio');
   }
+  
+  // All models failed, throw the last error
+  console.error('All Gemini models failed. Last error:', lastError);
+  
+  if (lastError instanceof z.ZodError) {
+    const issues = lastError.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ');
+    throw new Error(`Invalid response format from Gemini: ${issues}`);
+  }
+  
+  if (lastError instanceof Error) {
+    throw new Error(`Failed to process audio: ${lastError.message}`);
+  }
+  
+  throw new Error('Unknown error occurred while processing audio');
 }
