@@ -1,70 +1,70 @@
-'use client'
+"use client";
 
-import { useState, FormEvent, Suspense, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { Pinyon_Script } from 'next/font/google'
-import ThemeBackground from '@/components/ThemeBackground'
+import { useState, FormEvent, Suspense, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Pinyon_Script } from "next/font/google";
+import ThemeBackground from "@/components/ThemeBackground";
 
 const pinyonScript = Pinyon_Script({
-  weight: '400',
-  subsets: ['latin'],
-})
+  weight: "400",
+  subsets: ["latin"],
+});
 
 function LoginForm() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirect') || '/'
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect") || "/";
 
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   // Check if already logged in and redirect
   useEffect(() => {
-    fetch('/api/auth/check')
-      .then(res => res.json())
-      .then(data => {
+    fetch("/api/auth/check")
+      .then((res) => res.json())
+      .then((data) => {
         if (data.isLoggedIn) {
-          router.push(redirectTo)
+          router.push(redirectTo);
         }
       })
       .catch(() => {
         // Ignore errors, user can still try to login
-      })
-  }, [router, redirectTo])
+      });
+  }, [router, redirectTo]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setError('')
-    setIsLoading(true)
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ username, password }),
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (response.ok) {
         // Login successful - redirect to intended page
-        router.push(redirectTo)
-        router.refresh()
+        router.push(redirectTo);
+        router.refresh();
       } else {
         // Login failed - show error
-        setError(data.error || 'Login failed')
+        setError(data.error || "Login failed");
       }
     } catch (err) {
-      setError('An error occurred. Please try again.')
-      console.error('Login error:', err)
+      setError("An error occurred. Please try again.");
+      console.error("Login error:", err);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-[#F0F2F4] overflow-hidden">
@@ -73,16 +73,19 @@ function LoginForm() {
       <div
         className="w-full max-w-md px-6 relative z-10"
         style={{
-          paddingTop: 'env(safe-area-inset-top)',
-          paddingBottom: 'env(safe-area-inset-bottom)',
-          paddingLeft: 'calc(1.5rem + env(safe-area-inset-left))',
-          paddingRight: 'calc(1.5rem + env(safe-area-inset-right))',
+          paddingTop: "env(safe-area-inset-top)",
+          paddingBottom: "env(safe-area-inset-bottom)",
+          paddingLeft: "calc(1.5rem + env(safe-area-inset-left))",
+          paddingRight: "calc(1.5rem + env(safe-area-inset-right))",
         }}
       >
         {/* Logo/Title */}
         <div className="text-center mb-12 relative">
-          <h1 className={`${pinyonScript.className} text-7xl text-[#1a1a1a] mb-2 relative flex items-center justify-center`}>
-            <span className="text-9xl leading-[0.8] mr-[0.02em]">A</span>than Notes
+          <h1
+            className={`${pinyonScript.className} text-7xl text-[#1a1a1a] mb-2 relative flex items-center justify-center`}
+          >
+            <span className="text-9xl leading-[0.8] mr-[0.02em]">A</span>than
+            Notes
           </h1>
           <p className="text-[#5A5A5A] text-sm mt-4 tracking-wide">
             Sign in to continue
@@ -181,7 +184,7 @@ function LoginForm() {
                   Signing in...
                 </span>
               ) : (
-                'Sign in'
+                "Sign in"
               )}
             </button>
           </form>
@@ -195,17 +198,19 @@ function LoginForm() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="text-[#787774]">Loading...</div>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-white">
+          <div className="text-[#787774]">Loading...</div>
+        </div>
+      }
+    >
       <LoginForm />
     </Suspense>
-  )
+  );
 }

@@ -108,6 +108,19 @@ export default withPWA({
       }
     },
     {
+      urlPattern: /\/api\/process-audio/i,
+      handler: 'NetworkOnly',
+      options: {
+        cacheName: 'audio-processing',
+        backgroundSync: {
+          name: 'audio-processing-queue',
+          options: {
+            maxRetentionTime: 24 * 60 // Retry for max of 24 Hours
+          }
+        }
+      }
+    },
+    {
       urlPattern: /\/api\/.*$/i,
       handler: 'NetworkFirst',
       options: {
