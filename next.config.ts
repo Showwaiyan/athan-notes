@@ -112,7 +112,7 @@ export default withPWA({
       handler: 'NetworkFirst',
       options: {
         cacheName: 'apis',
-        networkTimeoutSeconds: 10,
+        networkTimeoutSeconds: 120, // 2 minutes - allows processing of long audio (up to 15 min)
         expiration: {
           maxEntries: 16,
           maxAgeSeconds: 60 // 1 minute

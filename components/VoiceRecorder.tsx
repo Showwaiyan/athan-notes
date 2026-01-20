@@ -24,6 +24,7 @@ export default function VoiceRecorder() {
   // Processing state
   const [processedNote, setProcessedNote] = useState<ProcessedNote | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [processingTime, setProcessingTime] = useState(0)
 
   // Refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -160,6 +161,16 @@ export default function VoiceRecorder() {
 
     setRecordingState('processing')
     setError(null)
+    setProcessingTime(0)
+
+    // Start progress timer
+    const progressInterval = setInterval(() => {
+      setProcessingTime(prev => prev + 1)
+    }, 1000)
+
+    // Setup timeout controller (2 minutes max)
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 120000) // 120 seconds
 
     try {
       const formData = new FormData()
@@ -168,7 +179,10 @@ export default function VoiceRecorder() {
       const response = await fetch('/api/process-audio', {
         method: 'POST',
         body: formData,
+        signal: controller.signal,
       })
+
+      clearTimeout(timeoutId)
 
       const data = await response.json()
 
@@ -180,9 +194,19 @@ export default function VoiceRecorder() {
       setRecordingState('completed')
 
     } catch (err) {
+      clearTimeout(timeoutId)
       console.error('Error processing audio:', err)
-      setError(err instanceof Error ? err.message : 'Failed to process audio')
+      
+      // Handle timeout specifically
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError('Processing took too long. Please try a shorter recording or check your internet connection.')
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to process audio')
+      }
+      
       setRecordingState('error')
+    } finally {
+      clearInterval(progressInterval)
     }
   }
 
@@ -193,6 +217,7 @@ export default function VoiceRecorder() {
     setAudioBlob(null)
     setProcessedNote(null)
     setError(null)
+    setProcessingTime(0)
     audioChunksRef.current = []
   }
 
@@ -299,9 +324,15 @@ export default function VoiceRecorder() {
           )}
 
           {recordingState === 'processing' && (
-            <div className="flex items-center gap-3">
-              <div className="w-5 h-5 border-2 border-[#37352f] border-t-transparent rounded-full animate-spin" />
-              <span className="text-[#37352f] font-medium">Processing with Gemini AI...</span>
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-5 h-5 border-2 border-[#37352f] border-t-transparent rounded-full animate-spin" />
+                <span className="text-[#37352f] font-medium">Processing with Gemini AI...</span>
+              </div>
+              <div className="text-sm text-gray-600">
+                {processingTime}s
+                {duration > 180 && ' (Long audio may take up to 2 minutes)'}
+              </div>
             </div>
           )}
 
