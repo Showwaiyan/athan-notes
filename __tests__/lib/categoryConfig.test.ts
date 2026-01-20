@@ -66,7 +66,7 @@ describe('categoryConfig', () => {
 
       expect(result).toEqual(validConfig);
       expect(consoleWarnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('No config/categories.json found')
+        expect.stringContaining('config/categories.json not found')
       );
       
       consoleWarnSpy.mockRestore();

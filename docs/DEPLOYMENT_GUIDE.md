@@ -479,44 +479,66 @@ Make Athan Notes your own by customizing categories, colors, and more.
 
 ### Customize Categories
 
-1. **Edit the categories file:**
+**Important:** The `config/categories.json` file is committed to your repository. Any changes you make will be deployed to Vercel automatically.
+
+#### Step-by-Step Instructions
+
+1. **Edit the categories file in your repository:**
    ```bash
-   # On your local machine
+   # On your local machine (in your cloned repository)
    nano config/categories.json
+   # Or use any text editor: VS Code, Sublime, etc.
    ```
 
-2. **Modify categories:**
+2. **Modify categories to fit your needs:**
    ```json
    {
      "categories": [
        {
          "name": "Work",
-         "description": "Work-related notes and tasks",
-         "icon": "💼"
+         "icon": "💼",
+         "description": "Work-related notes, tasks, meetings, and projects"
        },
        {
          "name": "Personal",
-         "description": "Personal thoughts and ideas",
-         "icon": "🌟"
+         "icon": "🌟",
+         "description": "Personal thoughts, ideas, diary entries, and reflections"
        }
      ]
    }
    ```
 
-3. **Update Notion database:**
-   - Add the same category names to your Notion database "Category" property
-   - Match the names exactly (case-sensitive)
+   **Rules:**
+   - Category names must be **case-sensitive** exact matches
+   - At least 1 category is required
+   - Maximum 20 categories recommended
+   - Each category needs: `name`, `icon` (emoji), and `description`
 
-4. **Commit and push:**
+3. **Update your Notion database to match:**
+   - Open your Notion database
+   - Click the **Category** property (Select type)
+   - Add/remove/rename options to match your `categories.json` exactly
+   - **Case-sensitive:** "Work" ≠ "work"
+
+4. **Commit your changes to Git:**
    ```bash
    git add config/categories.json
-   git commit -m "Customize categories"
+   git commit -m "Customize categories for my workflow"
    git push origin main
    ```
 
-5. **Redeploy** (automatic on Vercel/Netlify/Railway)
+5. **Vercel auto-deploys:**
+   - Vercel automatically detects your push
+   - Redeploys with your new categories (~2 minutes)
+   - Your categories are now live!
 
-**See:** `docs/CUSTOMIZE_CATEGORIES.md` for detailed instructions
+**📖 For detailed category customization options, see:** [`docs/CUSTOMIZE_CATEGORIES.md`](./CUSTOMIZE_CATEGORIES.md)
+
+**⚠️ Important Notes:**
+
+- **Don't submit PRs with your custom categories** - Keep your `categories.json` customizations in your fork
+- **Pulling updates:** When pulling updates from the original repo, you may need to merge conflicts in `categories.json`
+- **Multiple deployments:** Each fork can have different categories - customize for your needs
 
 ### Other Customizations
 

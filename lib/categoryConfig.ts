@@ -22,23 +22,24 @@ let cachedConfig: CategoriesConfig | null = null;
 
 /**
  * Get the path to the categories config file
- * Tries categories.json first (user's custom), falls back to categories.example.json
+ * Uses categories.json from the config directory
+ * Falls back to categories.example.json if categories.json is missing
  */
 function getCategoriesConfigPath(): string {
   const configDir = path.join(process.cwd(), 'config');
-  const userConfigPath = path.join(configDir, 'categories.json');
+  const configPath = path.join(configDir, 'categories.json');
   const exampleConfigPath = path.join(configDir, 'categories.example.json');
 
-  // Check if user has created their own config
-  if (fs.existsSync(userConfigPath)) {
-    return userConfigPath;
+  // Check if categories.json exists
+  if (fs.existsSync(configPath)) {
+    return configPath;
   }
 
   // Fall back to example config
   if (fs.existsSync(exampleConfigPath)) {
     console.warn(
-      '⚠️  No config/categories.json found. Using categories.example.json as fallback.\n' +
-      '   To customize categories, copy categories.example.json to categories.json and edit it.\n' +
+      '⚠️  config/categories.json not found. Using categories.example.json as fallback.\n' +
+      '   This should not happen in production. The categories.json file should be committed to your repository.\n' +
       '   See docs/CUSTOMIZE_CATEGORIES.md for details.'
     );
     return exampleConfigPath;
@@ -46,7 +47,7 @@ function getCategoriesConfigPath(): string {
 
   throw new Error(
     'No category configuration file found. ' +
-    'Please create config/categories.json or restore config/categories.example.json'
+    'Please ensure config/categories.json exists in your repository.'
   );
 }
 

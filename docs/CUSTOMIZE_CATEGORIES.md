@@ -19,20 +19,27 @@ This guide explains how to customize the categories used in Athan Notes for orga
 
 ## Quick Start
 
-**3 steps to customize your categories:**
+**For Local Development:**
 
-1. **Copy the example config file:**
+1. **Edit `config/categories.json`** directly with your preferred categories
+2. **Update your Notion database** to match the category names exactly (case-sensitive)
+3. **Restart the app** to see changes
+
+**For Production Deployment (Vercel):**
+
+1. **Edit `config/categories.json`** in your forked repository
+2. **Update your Notion database** to match the category names exactly
+3. **Commit and push** to your repository:
    ```bash
-   cp config/categories.example.json config/categories.json
+   git add config/categories.json
+   git commit -m "Customize categories"
+   git push origin main
    ```
-
-2. **Edit `config/categories.json`** with your preferred categories
-
-3. **Update your Notion database** to match the category names exactly
-
-4. **Restart the app** (development or production server)
+4. **Vercel auto-deploys** - Your changes will be live in ~2 minutes
 
 That's it! Your app will now use your custom categories.
+
+**Note:** `config/categories.json` is now committed to your repository and will be deployed to Vercel. The `categories.example.json` file is kept as a reference template.
 
 ---
 
@@ -72,17 +79,21 @@ Gemini reads the description to understand that voice notes about business ideas
 
 ## Step-by-Step Guide
 
-### Step 1: Create Your Configuration File
+### Step 1: Understanding the Configuration Files
 
-The repository includes `config/categories.example.json` as a template. This file is **NOT git-ignored** and serves as the default fallback.
+The repository includes two category configuration files:
 
-**Create your own customizable config:**
+- **`config/categories.json`** - The active configuration file used by the app
+  - ✅ **Committed to Git** - Will be deployed to Vercel
+  - ✅ Customize this file directly in your fork
+  - ✅ Changes are deployed when you push to your repository
 
-```bash
-cp config/categories.example.json config/categories.json
-```
+- **`config/categories.example.json`** - Template/reference file
+  - 📄 Shows the default category structure
+  - 📄 Use as reference when creating custom categories
+  - 📄 Don't edit this file - it's just a template
 
-Your `config/categories.json` file **IS git-ignored**, so you can customize it without Git conflicts.
+**Important Change:** Previously, `categories.json` was git-ignored. Now it's committed to your repository so your customizations deploy to Vercel automatically.
 
 ### Step 2: Edit Categories in the Config File
 
@@ -140,20 +151,30 @@ Category (Select property)
 - ❌ "Projects" (plural) vs ✅ "Project" (singular)
 - ❌ "Work" vs ✅ "Project"
 
-### Step 4: Restart the Application
+### Step 4: Deploy Your Changes
 
-Changes to `config/categories.json` are loaded when the app starts.
-
-**Development mode:**
+**For Local Development:**
 ```bash
+# Just restart the app
 npm run dev
 ```
 
-**Production mode:**
+**For Production (Vercel):**
 ```bash
-npm run build
-npm start
+# Commit and push your changes
+git add config/categories.json
+git commit -m "Customize categories for my workflow"
+git push origin main
+
+# Vercel automatically redeploys (takes ~2 minutes)
+# Your categories will be live on your deployed app
 ```
+
+**Important Notes:**
+- ✅ Your `categories.json` is committed to your fork
+- ✅ Vercel deploys your custom categories automatically
+- ⚠️ Don't create pull requests with your custom categories to the original repo
+- ⚠️ When pulling updates from upstream, you may need to merge `categories.json`
 
 ### Step 5: Verify It Works
 
@@ -371,7 +392,12 @@ No Notion changes needed for icon/description updates.
    - Click "Delete"
    - Confirm deletion
 
-5. **Restart app**
+5. **Commit and deploy:**
+   ```bash
+   git add config/categories.json
+   git commit -m "Remove unused category"
+   git push origin main  # Vercel auto-deploys
+   ```
 
 **⚠️ WARNING:** If you remove a category from config but not from Notion, existing pages with that category will still exist but new pages won't use it.
 
@@ -381,17 +407,58 @@ No Notion changes needed for icon/description updates.
 
 ### Issue: "No config/categories.json found" warning
 
-**Cause:** You haven't created your custom config file yet.
+**Cause:** The `categories.json` file is missing from your repository.
 
 **Solution:**
-```bash
-cp config/categories.example.json config/categories.json
-```
 
-The app will use `categories.example.json` as a fallback, but you should create your own `categories.json` for customization.
+This should not happen in production anymore since `categories.json` is now committed to the repository. If you see this:
+
+1. **Check if the file exists:**
+   ```bash
+   ls -la config/categories.json
+   ```
+
+2. **If missing, restore from example:**
+   ```bash
+   cp config/categories.example.json config/categories.json
+   git add config/categories.json
+   git commit -m "Add categories configuration"
+   git push origin main
+   ```
+
+3. **Verify deployment:** Check that `config/categories.json` is in your GitHub repository
 
 ---
 
+### Issue: Categories not deploying to Vercel
+
+**Cause:** Changes to `categories.json` not committed/pushed to repository.
+
+**Solution:**
+
+1. **Verify file is committed:**
+   ```bash
+   git status
+   # Should NOT show categories.json as untracked
+   ```
+
+2. **If not committed:**
+   ```bash
+   git add config/categories.json
+   git commit -m "Update categories"
+   git push origin main
+   ```
+
+3. **Check Vercel deployment logs:**
+   - Go to Vercel dashboard
+   - Click on your project
+   - Go to "Deployments"
+   - Check the latest deployment succeeded
+
+4. **Force redeploy if needed:**
+   - Vercel dashboard → Deployments → Latest → "Redeploy"
+
+---
 ### Issue: "Invalid category, falling back to: Personal"
 
 **Cause:** Gemini returned a category that doesn't exist in your Notion database.

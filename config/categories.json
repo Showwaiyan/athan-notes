@@ -1,0 +1,24 @@
+{
+  "categories": [
+    {
+      "name": "Project",
+      "icon": "🚀",
+      "description": "Business ideas, app ideas, work projects, startups, brainstorming, entrepreneurship, product development"
+    },
+    {
+      "name": "Learning",
+      "icon": "📚",
+      "description": "Study notes, education, courses, tutorials, knowledge acquisition, research, books, skills development"
+    },
+    {
+      "name": "Personal",
+      "icon": "✨",
+      "description": "Private thoughts, diary entries, personal reflections, emotions, daily experiences, journaling"
+    },
+    {
+      "name": "Task",
+      "icon": "✅",
+      "description": "To-dos, action items, reminders, checklists, things to complete, errands, responsibilities"
+    }
+  ]
+}

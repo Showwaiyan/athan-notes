@@ -41,10 +41,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Category configuration (user-customizable)
-# Users should copy categories.example.json to categories.json and customize
-/config/categories.json
-
 # Agent config
 AGENTS.md
 plan.md
