@@ -64,7 +64,7 @@ const MAX_AUDIO_SIZE_BYTES = 50 * 1024 * 1024; // 50MB
 const GEMINI_MODELS = [
   'gemini-2.5-flash',                    // Primary: Latest stable multimodal model
   'gemini-2.5-flash-preview-09-2025',    // Fallback 1: Preview model (September 2025)
-  'gemini-2.5-flash-lite',               // Fallback 2: Lightweight, fastest response
+  'gemini-3-flash-preview',              // Fallback 2: Gemini 3.0 preview (newest)
 ];
 
 // Timeout per model attempt (60 seconds)
