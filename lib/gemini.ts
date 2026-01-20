@@ -58,12 +58,13 @@ const MAX_AUDIO_DURATION_MS = 15 * 60 * 1000; // 15 minutes in milliseconds
 const MAX_AUDIO_SIZE_BYTES = 50 * 1024 * 1024; // 50MB
 
 // Gemini model fallback configuration
-// Models are tried in order. If primary fails with transient errors (503, 429, 500),
+// Models are tried in order. If primary fails with transient errors (404, 503, 429, 500),
 // the next model in the list is attempted automatically.
+// Note: Using current generation models (tested and verified January 2026)
 const GEMINI_MODELS = [
-  'gemini-2.5-flash',      // Primary: Latest generation multimodal model
-  'gemini-1.5-flash',      // Fallback 1: Stable, well-tested model
-  'gemini-1.5-flash-8b',   // Fallback 2: Lightweight, high availability
+  'gemini-2.5-flash',                    // Primary: Latest stable multimodal model
+  'gemini-2.5-flash-preview-09-2025',    // Fallback 1: Preview model (September 2025)
+  'gemini-2.5-flash-lite',               // Fallback 2: Lightweight, fastest response
 ];
 
 // Timeout per model attempt (60 seconds)
@@ -97,7 +98,7 @@ export function validateAudioFile(file: { size: number; type?: string }): {
 
 /**
  * Checks if an error is a transient error that should trigger model fallback
- * Transient errors: 503 (Service Unavailable), 429 (Rate Limit), 500 (Internal Server Error)
+ * Transient errors: 404 (Not Found), 503 (Service Unavailable), 429 (Rate Limit), 500 (Internal Server Error)
  */
 function isTransientError(error: unknown): boolean {
   if (!(error instanceof Error)) {
@@ -107,11 +108,12 @@ function isTransientError(error: unknown): boolean {
   const errorMessage = error.message.toLowerCase();
   
   // Check for HTTP status codes in error message
+  const has404 = errorMessage.includes('404') || errorMessage.includes('not found') || errorMessage.includes('is not found');
   const has503 = errorMessage.includes('503') || errorMessage.includes('service unavailable') || errorMessage.includes('overloaded');
   const has429 = errorMessage.includes('429') || errorMessage.includes('rate limit') || errorMessage.includes('quota exceeded');
   const has500 = errorMessage.includes('500') || errorMessage.includes('internal server error');
   
-  return has503 || has429 || has500;
+  return has404 || has503 || has429 || has500;
 }
 
 /**
