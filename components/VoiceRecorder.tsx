@@ -68,7 +68,8 @@ export default function VoiceRecorder() {
 
       // Create MediaRecorder
       const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
+        mimeType: 'audio/webm;codecs=opus',
+        audioBitsPerSecond: 64000
       })
       mediaRecorderRef.current = mediaRecorder
 
