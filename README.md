@@ -7,7 +7,7 @@ A Next.js Progressive Web App (PWA) that records Burmese voice notes, transcribe
 **Perfect for:** Capturing ideas, taking notes, and organizing thoughts in Burmese language through voice - anywhere, anytime, on any device.
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Showwaiyan/athan-notes)
-
+![Demo](./docs/demo.png)
 ---
 
 ## ✨ Features
